@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
+using ByteBuddy.Utils;
 
-namespace ByteBuddy
+namespace ByteBuddy.DLL
 {
     public class Win32
     {
@@ -55,13 +56,27 @@ namespace ByteBuddy
         ///        the function creates a memory DC compatible with the application's current screen.</param>
         /// <returns>
         ///        If the function succeeds, the return value is the handle to a memory DC.
-        ///        If the function fails, the return value is <see cref="System.IntPtr.Zero"/>.
+        ///        If the function fails, the return value is <see cref="nint.Zero"/>.
         /// </returns>
-        [DllImport("gdi32.dll", EntryPoint = "CreateCompatibleDC", SetLastError = true)]
-        public static extern IntPtr CreateCompatibleDC([In] IntPtr hdc);
+        [DllImport("gdi32.dll", EntryPoint = "CreateCompatibleDC")]
+        public static extern nint CreateCompatibleDC([In] nint hdc);
+
+        [DllImport("shell32.dll")]
+        public static extern nint SHAppBarMessage(ABM dwMessage, [In] ref APPBARDATA pData);
 
         [DllImport("user32.dll")]
-        public static extern IntPtr GetDC(IntPtr hWnd);
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool IsWindowVisible(IntPtr hWnd);
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool AllocConsole();
+
+        [DllImport("user32.dll")]
+        public static extern nint FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("user32.dll")]
+        public static extern nint GetDC(nint hWnd);
 
         /// <summary>Selects an object into the specified device context (DC). The new object replaces the previous object of the same type.</summary>
         /// <param name="hdc">A handle to the DC.</param>
@@ -79,17 +94,17 @@ namespace ByteBuddy
         ///   <para>ICM: If the object being selected is a brush or a pen, color management is performed.</para>
         /// </remarks>
         [DllImport("gdi32.dll", EntryPoint = "SelectObject")]
-        public static extern IntPtr SelectObject([In] IntPtr hdc, [In] IntPtr hgdiobj);
+        public static extern nint SelectObject([In] nint hdc, [In] nint hgdiobj);
 
         [DllImport("user32.dll")]
-        public static extern bool ReleaseDC(IntPtr hWnd, IntPtr hDC);
+        public static extern bool ReleaseDC(nint hWnd, nint hDC);
 
         /// <summary>Deletes the specified device context (DC).</summary>
         /// <param name="hdc">A handle to the device context.</param>
         /// <returns><para>If the function succeeds, the return value is nonzero.</para><para>If the function fails, the return value is zero.</para></returns>
         /// <remarks>An application must not delete a DC whose handle was obtained by calling the <c>GetDC</c> function. Instead, it must call the <c>ReleaseDC</c> function to free the DC.</remarks>
         [DllImport("gdi32.dll", EntryPoint = "DeleteDC")]
-        public static extern bool DeleteDC([In] IntPtr hdc);
+        public static extern bool DeleteDC([In] nint hdc);
 
         /// <summary>Deletes a logical pen, brush, font, bitmap, region, or palette, freeing all system resources associated with the object. After the object is deleted, the specified handle is no longer valid.</summary>
         /// <param name="hObject">A handle to a logical pen, brush, font, bitmap, region, or palette.</param>
@@ -103,9 +118,9 @@ namespace ByteBuddy
         /// </remarks>
         [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool DeleteObject([In] IntPtr hObject);
+        public static extern bool DeleteObject([In] nint hObject);
 
         [DllImport("user32.dll", ExactSpelling = true, SetLastError = true)]
-        public static extern bool UpdateLayeredWindow(IntPtr hwnd, IntPtr hdcDst, ref Point pptDst, ref Size psize, IntPtr hdcSrc, ref Point pptSrc, uint crKey, [In] ref BLENDFUNCTION pblend, uint dwFlags);
+        public static extern bool UpdateLayeredWindow(nint hwnd, nint hdcDst, ref Point pptDst, ref Size psize, nint hdcSrc, ref Point pptSrc, uint crKey, [In] ref BLENDFUNCTION pblend, uint dwFlags);
     }
 }

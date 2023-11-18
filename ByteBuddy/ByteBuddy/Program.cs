@@ -1,3 +1,5 @@
+using ByteBuddy.DLL;
+
 namespace ByteBuddy
 {
     internal static class Program
@@ -10,8 +12,16 @@ namespace ByteBuddy
         {
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
+            EnableConsole();
             ApplicationConfiguration.Initialize();
             Application.Run(new Form1());
+        }
+
+        private static void EnableConsole()
+        {
+#if DEBUG
+            Win32.AllocConsole();
+#endif
         }
     }
 }

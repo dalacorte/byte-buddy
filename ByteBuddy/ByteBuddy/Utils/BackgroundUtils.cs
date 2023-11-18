@@ -1,6 +1,7 @@
-﻿using static ByteBuddy.BitmapUtils;
+﻿using ByteBuddy.DLL;
+using static ByteBuddy.Utils.BitmapUtils;
 
-namespace ByteBuddy
+namespace ByteBuddy.Utils
 {
     public static class BackgroundUtils
     {
@@ -24,10 +25,10 @@ namespace ByteBuddy
                 throw new ApplicationException("Format not supported");
             }
 
-            IntPtr hBitmap = IntPtr.Zero;
-            IntPtr oldBitmap = IntPtr.Zero;
-            IntPtr screenDc = Win32.GetDC(IntPtr.Zero);
-            IntPtr memDc = Win32.CreateCompatibleDC(screenDc);
+            nint hBitmap = nint.Zero;
+            nint oldBitmap = nint.Zero;
+            nint screenDc = Win32.GetDC(nint.Zero);
+            nint memDc = Win32.CreateCompatibleDC(screenDc);
 
             try
             {
@@ -63,9 +64,9 @@ namespace ByteBuddy
             //}
             finally
             {
-                Win32.ReleaseDC(IntPtr.Zero, screenDc);
+                Win32.ReleaseDC(nint.Zero, screenDc);
 
-                if (hBitmap != IntPtr.Zero)
+                if (hBitmap != nint.Zero)
                 {
                     Win32.SelectObject(memDc, oldBitmap);
                     Win32.DeleteObject(hBitmap);

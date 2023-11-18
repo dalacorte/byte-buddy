@@ -1,4 +1,4 @@
-using Microsoft.Win32.SafeHandles;
+using ByteBuddy.Utils;
 using System.ComponentModel;
 using Timer = System.Windows.Forms.Timer;
 
@@ -19,10 +19,38 @@ namespace ByteBuddy
         private int _frameWidth { get; set; }
         private int _frameHeight { get; set; }
 
+        private Image FullImage
+        {
+            get
+            {
+                // TODO: implement actions
+                if (true)
+                    return Properties.Resources.Right;
+                else
+                    return Properties.Resources.Left;
+            }
+        }
+
+        private Bitmap FrameImage
+        {
+            get
+            {
+                Bitmap bitmap = new Bitmap(_fullWidth, _fullHeight);
+                using (Graphics g = Graphics.FromImage(bitmap))
+                {
+                    g.DrawImage(FullImage, new Rectangle(0, 0, bitmap.Width, bitmap.Height), new Rectangle(_frameWidth * _frame, 0, _frameWidth, _frameHeight), GraphicsUnit.Pixel);
+                    return bitmap;
+                }
+            }
+        }
+
         public Form1()
         {
             InitializeComponent();
             this.TopMost = true;
+
+            TaskbarUtils tb = new TaskbarUtils();
+            DebugLogger.Debug("Taskbar Informations: w:{0}, h:{1} - hide:{2}", tb.Size.Width, tb.Size.Height, tb.AutoHide);
 
             _fullWidth = FullImage.Width / _frameCount;
             _fullHeight = FullImage.Height;
@@ -30,14 +58,36 @@ namespace ByteBuddy
             _frameWidth = _fullWidth;
             _frameHeight = _fullHeight;
 
-            _timerSpeed.Interval = 50;
+            DebugLogger.Debug("Frame Informations: w:{0}, h:{1}", _frameWidth, _frameHeight);
+            DebugLogger.Debug("Frames: {0}", _frameCount);
+
+
+
+            _timerSpeed.Interval = _frameCount;
             _timerSpeed.Enabled = true;
             _timerSpeed.Tick += new EventHandler(timerSpeed_Tick);
 
+            this.MouseMove += new MouseEventHandler(Form2_MouseMove);
             this.DoubleClick += new EventHandler(Form2_DoubleClick);
             this.MouseDown += new MouseEventHandler(Form2_MouseDown);
             this.MouseUp += new MouseEventHandler(Form2_MouseUp);
-            this.MouseMove += new MouseEventHandler(Form2_MouseMove);
+        }
+
+        private void InitializeStyles()
+        {
+            DebugLogger.Debug("Setting styles");
+
+            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            SetStyle(ControlStyles.UserPaint, true);
+            UpdateStyles();
+
+            DebugLogger.Debug("Styles OK");
+        }
+
+        public void SetBits()
+        {
+            BackgroundUtils.SetBackground(bitmap: FrameImage, handle: Handle);
+            GC.Collect();
         }
 
         #region Override
@@ -51,9 +101,13 @@ namespace ByteBuddy
 
         protected override void OnHandleCreated(EventArgs e)
         {
+            DebugLogger.Debug("Creating handle");
+
             InitializeStyles();
             base.OnHandleCreated(e);
             _haveHandle = true;
+
+            DebugLogger.Debug("Handle OK");
         }
 
         protected override CreateParams CreateParams
@@ -68,18 +122,6 @@ namespace ByteBuddy
 
         #endregion
 
-        void Form2_MouseUp(object sender, MouseEventArgs e)
-        {
-
-        }
-
-        private void InitializeStyles()
-        {
-            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-            SetStyle(ControlStyles.UserPaint, true);
-            UpdateStyles();
-        }
-
         void timerSpeed_Tick(object sender, EventArgs e)
         {
             _frame++;
@@ -87,43 +129,8 @@ namespace ByteBuddy
 
             if (!_haveHandle)
                 return;
-            
+
             SetBits();
-        }
-
-        private void FixLeftTop()
-        {
-
-        }
-
-        private Image FullImage
-        {
-            get
-            { 
-                // TODO: implement actions
-                if (true)
-                    return Properties.Resources.Right;
-                else
-                    return Properties.Resources.Left;
-            }
-        }
-
-        public Bitmap FrameImage
-        {
-            get
-            {
-                Bitmap bitmap = new Bitmap(_fullWidth, _fullHeight);
-                using (Graphics g = Graphics.FromImage(bitmap))
-                {
-                    g.DrawImage(FullImage, new Rectangle(0, 0, bitmap.Width, bitmap.Height), new Rectangle(_frameWidth * _frame, 0, _frameWidth, _frameHeight), GraphicsUnit.Pixel);
-                    return bitmap;
-                }
-            }
-        }
-
-        void Form2_DoubleClick(object sender, EventArgs e)
-        {
-            this.Dispose();
         }
 
         void Form2_MouseMove(object sender, MouseEventArgs e)
@@ -131,15 +138,19 @@ namespace ByteBuddy
 
         }
 
+        void Form2_DoubleClick(object sender, EventArgs e)
+        {
+            this.Dispose();
+        }
+
         void Form2_MouseDown(object sender, MouseEventArgs e)
         {
 
         }
 
-        public void SetBits()
+        void Form2_MouseUp(object sender, MouseEventArgs e)
         {
-            BackgroundUtils.SetBackground(bitmap: FrameImage, handle: Handle);
-            GC.Collect();
+            
         }
     }
 }

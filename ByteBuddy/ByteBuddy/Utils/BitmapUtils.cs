@@ -1,12 +1,13 @@
-﻿using Microsoft.Win32.SafeHandles;
+﻿using ByteBuddy.DLL;
+using Microsoft.Win32.SafeHandles;
 
-namespace ByteBuddy
+namespace ByteBuddy.Utils
 {
     public static class BitmapUtils
     {
         public class SafeHBitmapHandle : SafeHandleZeroOrMinusOneIsInvalid
         {
-            public SafeHBitmapHandle(IntPtr preexistingHandle, bool ownsHandle = true)
+            public SafeHBitmapHandle(nint preexistingHandle, bool ownsHandle = true)
                 : base(ownsHandle)
             {
                 SetHandle(preexistingHandle);
