@@ -1,43 +1,38 @@
+using Microsoft.Win32.SafeHandles;
 using System.ComponentModel;
-using System.Resources;
 using Timer = System.Windows.Forms.Timer;
 
 namespace ByteBuddy
 {
     public partial class Form1 : Form
     {
-        Point oldPoint = new Point(0, 0);
-        bool mouseDown = false;
-        bool haveHandle = false;
-        Timer timerSpeed = new Timer();
-        int MaxCount = 50;
-        float stepX = 2f;
-        float stepY = 0f;
-        int count = 0;
-        bool speedMode = false;
-        float left = 0f, top = 0f;
+        private bool _haveHandle { get; set; } = false;
 
-        bool toRight = true;
-        int frameCount = 20;
-        int frame = 0;
-        int frameWidth = 100;
-        int frameHeight = 100;
+        private Timer _timerSpeed { get; set; } = new Timer();
+
+        private int _frameCount { get; set; } = 60;
+        private int _frame { get; set; } = 0;
+
+        private int _fullWidth { get; set; }
+        private int _fullHeight { get; set; }
+
+        private int _frameWidth { get; set; }
+        private int _frameHeight { get; set; }
 
         public Form1()
         {
             InitializeComponent();
             this.TopMost = true;
-            toRight = true;
-            frame = 20;
-            frame = 0;
-            frameWidth = FullImage.Width / 20;
-            frameHeight = FullImage.Height;
-            left = -frameWidth;
-            top = Screen.PrimaryScreen.WorkingArea.Height / 2f;
 
-            timerSpeed.Interval = 50;
-            timerSpeed.Enabled = true;
-            timerSpeed.Tick += new EventHandler(timerSpeed_Tick);
+            _fullWidth = FullImage.Width / _frameCount;
+            _fullHeight = FullImage.Height;
+
+            _frameWidth = _fullWidth;
+            _frameHeight = _fullHeight;
+
+            _timerSpeed.Interval = 50;
+            _timerSpeed.Enabled = true;
+            _timerSpeed.Tick += new EventHandler(timerSpeed_Tick);
 
             this.DoubleClick += new EventHandler(Form2_DoubleClick);
             this.MouseDown += new MouseEventHandler(Form2_MouseDown);
@@ -51,14 +46,14 @@ namespace ByteBuddy
         {
             e.Cancel = true;
             base.OnClosing(e);
-            haveHandle = false;
+            _haveHandle = false;
         }
 
         protected override void OnHandleCreated(EventArgs e)
         {
             InitializeStyles();
             base.OnHandleCreated(e);
-            haveHandle = true;
+            _haveHandle = true;
         }
 
         protected override CreateParams CreateParams
@@ -75,11 +70,7 @@ namespace ByteBuddy
 
         void Form2_MouseUp(object sender, MouseEventArgs e)
         {
-            count = 0;
-            MaxCount = new Random().Next(70) + 40;
-            timerSpeed.Interval = new Random().Next(20) + 2;
-            speedMode = true;
-            mouseDown = false;
+
         }
 
         private void InitializeStyles()
@@ -91,62 +82,26 @@ namespace ByteBuddy
 
         void timerSpeed_Tick(object sender, EventArgs e)
         {
-            if (!mouseDown)
-            {
-                count++;
-                if (count > MaxCount)
-                {
-                    MaxCount = new Random().Next(70) + 30;
-                    if (speedMode) timerSpeed.Interval = 50;
+            _frame++;
+            if (_frame >= _frameCount) _frame = 0;
 
-                    count = 0;
-                    stepX = (float)new Random().NextDouble() * 3f + 0.5f;
-                    stepY = ((float)new Random().NextDouble() - 0.5f) * 0.5f;
-                }
-
-                left = (left + (toRight ? 1 : -1) * stepX);
-                top = (top + stepY);
-                FixLeftTop();
-                this.Left = (int)left;
-                this.Top = (int)top;
-            }
-            frame++;
-            if (frame >= frameCount) frame = 0;
-
-            SetBits(FrameImage);
+            if (!_haveHandle)
+                return;
+            
+            SetBits();
         }
 
         private void FixLeftTop()
         {
-            if (toRight && left > Screen.PrimaryScreen.WorkingArea.Width)
-            {
-                toRight = false;
-                frame = 0;
-                count = 0;
-            }
-            else if (!toRight && left < -frameWidth)
-            {
-                toRight = true;
-                frame = 0;
-                count = 0;
-            }
-            if (top < -frameHeight)
-            {
-                stepY = 1f;
-                count = 0;
-            }
-            else if (top > Screen.PrimaryScreen.WorkingArea.Height)
-            {
-                stepY = -1f;
-                count = 0;
-            }
+
         }
 
         private Image FullImage
         {
             get
-            {
-                if (toRight)
+            { 
+                // TODO: implement actions
+                if (true)
                     return Properties.Resources.Right;
                 else
                     return Properties.Resources.Left;
@@ -157,10 +112,12 @@ namespace ByteBuddy
         {
             get
             {
-                Bitmap bitmap = new Bitmap(frameWidth, frameHeight);
-                Graphics g = Graphics.FromImage(bitmap);
-                g.DrawImage(FullImage, new Rectangle(0, 0, bitmap.Width, bitmap.Height), new Rectangle(frameWidth * frame, 0, frameWidth, frameHeight), GraphicsUnit.Pixel);
-                return bitmap;
+                Bitmap bitmap = new Bitmap(_fullWidth, _fullHeight);
+                using (Graphics g = Graphics.FromImage(bitmap))
+                {
+                    g.DrawImage(FullImage, new Rectangle(0, 0, bitmap.Width, bitmap.Height), new Rectangle(_frameWidth * _frame, 0, _frameWidth, _frameHeight), GraphicsUnit.Pixel);
+                    return bitmap;
+                }
             }
         }
 
@@ -171,62 +128,18 @@ namespace ByteBuddy
 
         void Form2_MouseMove(object sender, MouseEventArgs e)
         {
-            if (mouseDown)
-            {
-                this.Left += (e.X - oldPoint.X);
-                this.Top += (e.Y - oldPoint.Y);
-                left = this.Left;
-                top = this.Top;
-                FixLeftTop();
-            }
+
         }
 
         void Form2_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right) this.Dispose();
-            oldPoint = e.Location;
-            mouseDown = true;
+
         }
 
-        public void SetBits(Bitmap bitmap)
+        public void SetBits()
         {
-            if (!haveHandle) return;
-
-            if (!Bitmap.IsCanonicalPixelFormat(bitmap.PixelFormat) || !Bitmap.IsAlphaPixelFormat(bitmap.PixelFormat))
-                throw new ApplicationException("The picture must be 32bit picture with alpha channel.");
-
-            IntPtr oldBits = IntPtr.Zero;
-            IntPtr screenDC = Win32.GetDC(IntPtr.Zero);
-            IntPtr hBitmap = IntPtr.Zero;
-            IntPtr memDc = Win32.CreateCompatibleDC(screenDC);
-
-            try
-            {
-                Win32.Point topLoc = new Win32.Point(Left, Top);
-                Win32.Size bitMapSize = new Win32.Size(bitmap.Width, bitmap.Height);
-                Win32.BLENDFUNCTION blendFunc = new Win32.BLENDFUNCTION();
-                Win32.Point srcLoc = new Win32.Point(0, 0);
-
-                hBitmap = bitmap.GetHbitmap(Color.FromArgb(0));
-                oldBits = Win32.SelectObject(memDc, hBitmap);
-
-                blendFunc.BlendOp = Win32.AC_SRC_OVER;
-                blendFunc.SourceConstantAlpha = 255;
-                blendFunc.AlphaFormat = Win32.AC_SRC_ALPHA;
-                blendFunc.BlendFlags = 0;
-
-                Win32.UpdateLayeredWindow(Handle, screenDC, ref topLoc, ref bitMapSize, memDc, ref srcLoc, 0, ref blendFunc, Win32.ULW_ALPHA);
-            }
-            finally
-            {
-                if (hBitmap != IntPtr.Zero)
-                {
-                    Win32.SelectObject(memDc, oldBits);
-                    Win32.DeleteObject(hBitmap);
-                }
-                Win32.ReleaseDC(IntPtr.Zero, screenDC);
-                Win32.DeleteDC(memDc);
-            }
+            BackgroundUtils.SetBackground(bitmap: FrameImage, handle: Handle);
+            GC.Collect();
         }
     }
 }
