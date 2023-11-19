@@ -48,8 +48,11 @@ namespace ByteBuddy.Utils
                         top = control.Top;
                     }
 
-                    Win32.Point pointSource = new Win32.Point(left, top);
-                    Win32.Point topPos = new Win32.Point(0, 0);
+                    DebugLogger.Debug("Top: {0}", top);
+                    DebugLogger.Debug("Left: {0}", left);
+
+                    Win32.Point pointSource = new Win32.Point(0, 0);
+                    Win32.Point topPos = new Win32.Point(left, top);
                     Win32.BLENDFUNCTION blend = new Win32.BLENDFUNCTION();
                     blend.BlendOp = 0;
                     blend.BlendFlags = 0;

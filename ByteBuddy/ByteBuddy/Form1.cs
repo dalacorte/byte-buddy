@@ -13,11 +13,15 @@ namespace ByteBuddy
         private int _frameCount { get; set; } = 60;
         private int _frame { get; set; } = 0;
 
-        private int _fullWidth { get; set; }
-        private int _fullHeight { get; set; }
+        private int _fullWidth { get; set; } = 0;
+        private int _fullHeight { get; set; } = 0;
 
-        private int _frameWidth { get; set; }
-        private int _frameHeight { get; set; }
+        private int _frameWidth { get; set; } = 0;
+        private int _frameHeight { get; set; } = 0;
+
+        private bool _mouseDown { get; set; } = false;
+
+        private Point _oldPoint { get; set; } = new Point(0, 0);
 
         private Image FullImage
         {
@@ -61,16 +65,14 @@ namespace ByteBuddy
             DebugLogger.Debug("Frame Informations: w:{0}, h:{1}", _frameWidth, _frameHeight);
             DebugLogger.Debug("Frames: {0}", _frameCount);
 
-
-
             _timerSpeed.Interval = _frameCount;
             _timerSpeed.Enabled = true;
             _timerSpeed.Tick += new EventHandler(timerSpeed_Tick);
 
-            this.MouseMove += new MouseEventHandler(Form2_MouseMove);
-            this.DoubleClick += new EventHandler(Form2_DoubleClick);
-            this.MouseDown += new MouseEventHandler(Form2_MouseDown);
-            this.MouseUp += new MouseEventHandler(Form2_MouseUp);
+            MouseMove += new MouseEventHandler(Form2_MouseMove);
+            DoubleClick += new EventHandler(Form2_DoubleClick);
+            MouseDown += new MouseEventHandler(Form2_MouseDown);
+            MouseUp += new MouseEventHandler(Form2_MouseUp);
         }
 
         private void InitializeStyles()
@@ -86,7 +88,9 @@ namespace ByteBuddy
 
         public void SetBits()
         {
-            BackgroundUtils.SetBackground(bitmap: FrameImage, handle: Handle);
+            BackgroundUtils.SetBackground(bitmap: FrameImage, control: this);
+            //BackgroundUtils.SetBackground(bitmap: FrameImage, handle: Handle);
+
             GC.Collect();
         }
 
@@ -135,22 +139,33 @@ namespace ByteBuddy
 
         void Form2_MouseMove(object sender, MouseEventArgs e)
         {
-
+            if (_mouseDown)
+            {
+                Left += (e.X - _oldPoint.X);
+                Top += (e.Y - _oldPoint.Y);
+            }
         }
 
         void Form2_DoubleClick(object sender, EventArgs e)
         {
-            this.Dispose();
+#if DEBUG
+            Dispose();
+#endif
         }
 
         void Form2_MouseDown(object sender, MouseEventArgs e)
         {
-
+#if DEBUG
+            if (e.Button == MouseButtons.Right)
+                Dispose();
+#endif
+            _oldPoint = e.Location;
+            _mouseDown = true;
         }
 
         void Form2_MouseUp(object sender, MouseEventArgs e)
         {
-            
+            _mouseDown = false;
         }
     }
 }
