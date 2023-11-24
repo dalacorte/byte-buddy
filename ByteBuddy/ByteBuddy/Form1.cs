@@ -1,3 +1,4 @@
+using ByteBuddy.Entities;
 using ByteBuddy.Utils;
 using System.ComponentModel;
 using Timer = System.Windows.Forms.Timer;
@@ -10,7 +11,7 @@ namespace ByteBuddy
 
         private Timer _timerSpeed { get; set; } = new Timer();
 
-        private int _frameCount { get; set; } = 60;
+        private int _frameCount { get; set; } = 0;
         private int _frame { get; set; } = 0;
 
         private int _fullWidth { get; set; } = 0;
@@ -23,26 +24,32 @@ namespace ByteBuddy
 
         private Point _oldPoint { get; set; } = new Point(0, 0);
 
-        private Image FullImage
+        private List<Buddy> _buddies { get; set; } = new List<Buddy>();
+        private string _selectedBuddy { get; set; } = string.Empty;
+
+        private Image _fullImage
         {
             get
             {
-                // TODO: implement actions
-                if (true)
-                    return Properties.Resources.Right;
-                else
-                    return Properties.Resources.Left;
+                // TODO: Refactor
+                byte[] bytes = _buddies.First(buddy => buddy.Name == _selectedBuddy).Bytes;
+                using (MemoryStream ms = new MemoryStream(bytes))
+                {
+                    Image image = Image.FromStream(ms);
+                    Size size = new Size(image.Width * 2, image.Height * 2);
+                    return (Image)(new Bitmap(image, size));
+                }
             }
         }
 
-        private Bitmap FrameImage
+        private Bitmap _frameImage
         {
             get
             {
                 Bitmap bitmap = new Bitmap(_fullWidth, _fullHeight);
                 using (Graphics g = Graphics.FromImage(bitmap))
                 {
-                    g.DrawImage(FullImage, new Rectangle(0, 0, bitmap.Width, bitmap.Height), new Rectangle(_frameWidth * _frame, 0, _frameWidth, _frameHeight), GraphicsUnit.Pixel);
+                    g.DrawImage(_fullImage, new Rectangle(0, 0, bitmap.Width, bitmap.Height), new Rectangle(_frameWidth * _frame, 0, _frameWidth, _frameHeight), GraphicsUnit.Pixel);
                     return bitmap;
                 }
             }
@@ -53,11 +60,17 @@ namespace ByteBuddy
             InitializeComponent();
             this.TopMost = true;
 
+            _buddies = DatabaseUtils.GetAll<Buddy>("SELECT * FROM Buddies");
+            Random rnd = new Random();
+            int r = rnd.Next(_buddies.Count);
+            _selectedBuddy = _buddies[r].Name;
+            _frameCount = _buddies.First(w => w.Name == _selectedBuddy).Frames;
+
             TaskbarUtils tb = new TaskbarUtils();
             DebugLogger.Debug("Taskbar Informations: w:{0}, h:{1} - hide:{2}", tb.Size.Width, tb.Size.Height, tb.AutoHide);
 
-            _fullWidth = FullImage.Width / _frameCount;
-            _fullHeight = FullImage.Height;
+            _fullWidth = _fullImage.Width / _frameCount;
+            _fullHeight = _fullImage.Height;
 
             _frameWidth = _fullWidth;
             _frameHeight = _fullHeight;
@@ -88,8 +101,8 @@ namespace ByteBuddy
 
         public void SetBits()
         {
-            BackgroundUtils.SetBackground(bitmap: FrameImage, control: this);
-            //BackgroundUtils.SetBackground(bitmap: FrameImage, handle: Handle);
+            BackgroundUtils.SetBackground(bitmap: _frameImage, control: this);
+            //BackgroundUtils.SetBackground(bitmap: _frameImage, handle: Handle);
 
             GC.Collect();
         }

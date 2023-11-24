@@ -1,4 +1,5 @@
 using ByteBuddy.DLL;
+using ByteBuddy.Utils;
 
 namespace ByteBuddy
 {
@@ -13,6 +14,9 @@ namespace ByteBuddy
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             EnableConsole();
+            DatabaseUtils.CreateDatabase();
+            DatabaseUtils.CreateTable();
+            //DatabaseUtils.InitialPayload();
             ApplicationConfiguration.Initialize();
             Application.Run(new Form1());
         }
